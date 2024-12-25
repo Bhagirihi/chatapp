@@ -102,8 +102,8 @@ const mergeDataBySymbol = (nifty50, niftyBank, oiData) => {
 //Handle SOCKET.IO
 io.on("connection", async (socket) => {
   console.log("a SOCKET connected ==>", socket.id);
-  console.log("Getting cookies with Puppeteer...");
   const cookieHeader = await getCookiesWithPuppeteer();
+  console.log("Getting cookies with Puppeteer...", cookieHeader);
   headers = {
     ...headers,
     Cookie: cookieHeader,
@@ -112,11 +112,6 @@ io.on("connection", async (socket) => {
   };
 
   socket.emit("loader", false);
-
-  socket.on("chat message", (msg) => {
-    console.log("message: " + msg);
-    io.emit("message", msg);
-  });
 
   socket.on("fetchData", async () => {
     try {
