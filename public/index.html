@@ -2,94 +2,352 @@
 <html>
 
 <head>
-    <title>Socket.IO chat</title>
-
-
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <title>Rocket Stock Data</title>
 
     <style>
+        /* General Styles */
         body {
-            margin: 0;
-            padding-bottom: 3rem;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        #form {
-            background: rgba(0, 0, 0, 0.15);
-            padding: 0.25rem;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            display: flex;
-            height: 3rem;
-            box-sizing: border-box;
-            backdrop-filter: blur(10px);
-        }
-
-        #input {
-            border: none;
-            padding: 0 1rem;
-            flex-grow: 1;
-            border-radius: 2rem;
-            margin: 0.25rem;
-        }
-
-        #input:focus {
-            outline: none;
-        }
-
-        #form>button {
-            background: #333;
-            border: none;
-            padding: 0 1rem;
-            margin: 0.25rem;
-            border-radius: 3px;
-            outline: none;
-            color: #fff;
-        }
-
-        #messages {
-            list-style-type: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
             margin: 0;
             padding: 0;
         }
 
-        #messages>li {
-            padding: 0.5rem 1rem;
+        header {
+            text-align: center;
+            padding: 30px;
+            background-color: #2a2a2a;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
         }
 
-        #messages>li:nth-child(odd) {
-            background: #efefef;
+        h1 {
+            margin: 0;
+            font-size: 32px;
+            color: #f5a623;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* Summary Row */
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            background-color: #333333;
+            padding: 15px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            margin-bottom: 30px;
+        }
+
+        .summary-row p {
+            margin: 0;
+            color: #dddddd;
+            font-size: 18px;
+        }
+
+        .summary-row button {
+            padding: 12px 25px;
+            font-size: 18px;
+            background-color: #008CBA;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        .summary-row button:hover {
+            background-color: #006f8c;
+        }
+
+        /* Card Grid */
+        .card-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            color: #ffffff;
+            /* flex: 0 0 calc(33.333% - 20px); */
+            /* Three cards per row */
+            max-width: calc(33.333% - 20px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .price-header {
+            font-size: 16px;
+            color: #f5a623;
+            background: #444;
+            border-radius: 5px;
+            padding: 4px 8px;
+        }
+
+        .price-container {
+            display: flex;
+            justify-content: space-between;
+
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .price {
+            background: #eef;
+            border-radius: 8px;
+            padding: 8px 12px;
+            flex: 1 1 calc(45% - 10px);
+            /* Two prices per row */
+            margin: 5px 0;
+            text-align: center;
+            color: #000;
+            font-size: 14px;
+        }
+
+        .price-value {
+            margin-top: 4px;
+            font-size: 14px;
+            color: #bbb;
+        }
+
+        /* Add color to numbers based on value */
+        .positive {
+            color: #4caf50;
+        }
+
+        .negative {
+            color: #e74c3c;
+        }
+
+        .neutral {
+            color: #bbbbbb;
+        }
+
+        .loader {
+            display: none;
+            /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loader div {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #fff;
+            border-top-color: #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Make "Last Updated" text style fancy */
+        #lastUpdated {
+            font-size: 16px;
+            color: #f5a623;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .card {
+                flex: 0 0 calc(50% - 20px);
+                /* Two cards per row for smaller screens */
+                max-width: calc(50% - 20px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                flex: 0 0 calc(100% - 20px);
+                /* One card per row for very small screens */
+                max-width: calc(100% - 20px);
+            }
         }
     </style>
 </head>
 
 <body>
-    <ul id="messages"></ul>
-    <form id="form" action="">
-        <input id="input" autocomplete="off" /><button>Send</button>
-        <div id="" messages"></div>
-    </form>
+    <header>
+        <h1>Rocket Stock Data</h1>
+    </header>
+
+    <div class="container">
+        <div class="summary-row">
+            <p id="lastUpdated">Last Updated: --</p>
+            <p>Total Price: ₹<span id="totalPrice" class="neutral">0.00</span></p>
+            <p>Total Stocks: <span id="totalStocks" class="neutral">0</span></p>
+            <button id="fetchData">Fetch Data</button>
+        </div>
+
+        <!-- Loader -->
+        <div class="loader" id="loader">
+            <div></div>
+        </div>
+
+        <div class="card-grid" id="stockData"></div>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         var socket = io();
 
-        var form = document.getElementById('form');
-        var input = document.getElementById('input');
-        var allMessages = document.getElementById('messages');
+        document.getElementById("fetchData").addEventListener("click", () => {
+            socket.emit("fetchData");
+        });
 
-        socket.on('message', msg => {
-            const p = document.createElement('p');
-            p.innerHTML = msg;
-            allMessages.appendChild(p)
-        })
+        socket.on("connect", () => {
+            console.log("Socket connected");
+            const loader = document.getElementById("loader");
+            loader.style.display = "flex"; // Show loader
+            setTimeout(() => {
+                loader.style.display = "none"; // Hide loader
+            }, 500);
+        });
+        socket.on("loader", (value) => {
+            console.log("Socket connected");
+            const loader = document.getElementById("loader");
+            loader.style.display = "none"; // Hide loader
+            socket.emit("fetchData");
+        });
 
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            if (input.value) {
-                socket.emit('chat message', input.value);
-                input.value = '';
-            }
+
+
+        function getColorClass(value) {
+            if (value > 0) return "positive";
+            if (value < 0) return "negative";
+            return "neutral";
+        }
+
+        socket.on("updateData", (data) => {
+            const cardGrid = document.getElementById("stockData");
+            const totalPriceElement = document.getElementById("totalPrice");
+            const totalStocksElement = document.getElementById("totalStocks");
+            const lastUpdatedElement = document.getElementById("lastUpdated");
+
+            cardGrid.innerHTML = "";
+
+            let totalPrice = 0;
+            let totalStocks = 0;
+
+            data.forEach((item) => {
+
+                if (item.symbol !== "NIFTY BANK" && item.symbol !== "NIFTY 50") {
+                    totalPrice += item.lastPrice || 0;
+                    totalStocks++;
+
+
+                    const card = document.createElement("div");
+                    card.className = "card";
+
+                    card.innerHTML = `
+            <div class="card-header">
+                <div class="card-title">${item.symbol}</div>
+                <div class="price-header ${getColorClass(item.lastPrice - item.previousClose)}">
+                    ₹${item.lastPrice ? item.lastPrice.toFixed(2) : "N/A"}
+                </div>
+            </div>
+            <div class="price-container">
+                <div class="price">
+                    Open
+                    <div class="price-value ${getColorClass(item.open - item.previousClose)}">${item.open || "N/A"}</div>
+                </div>
+                <div class="price">
+                    High
+                    <div class="price-value ${getColorClass(item.dayHigh - item.previousClose)}">${item.dayHigh || "N/A"}</div>
+                </div>
+                <div class="price">
+                    Low
+                    <div class="price-value ${getColorClass(item.dayLow - item.previousClose)}">${item.dayLow || "N/A"}</div>
+                </div>
+                <div class="price">
+                    Prev
+                    <div class="price-value">${item.previousClose || "N/A"}</div>
+                </div>
+            </div>
+            <div class="price-container">
+                <div class="price ${getColorClass(item.change)}">
+                    Volume of Change
+                    <div class="price-value">${item.change.toFixed(2) || "N/A"}%</div>
+                </div>
+                <div class="price">
+                    Average of OI
+                    <div class="price-value">${item.avgInOI || "N/A"}%</div>
+                </div>
+            </div>
+            <div class="price-container">
+                <div class="price">
+                    52High
+                    <div class="price-value ${getColorClass(item.yearHigh - item.previousClose)}">${item.yearHigh || "N/A"}</div>
+                </div>
+                <div class="price">
+                    52Low
+                    <div class="price-value ${getColorClass(item.yearLow - item.previousClose)}">${item.yearLow || "N/A"}</div>
+                </div>
+                <div class="price">
+                    VC(30D)
+                    <div class="price-value ${getColorClass(item.perChange30d)}">${item.perChange30d || "N/A"}%</div>
+                </div>
+                <div class="price">
+                    VC(365D)
+                    <div class="price-value ${getColorClass(item.perChange365d)}">${item.perChange365d || "N/A"}%</div>
+                </div>
+            </div>
+        `;
+                    cardGrid.appendChild(card);
+                }
+            });
+
+            totalPriceElement.textContent = totalPrice.toFixed(2);
+            totalPriceElement.className = getColorClass(totalPrice);
+            totalStocksElement.textContent = totalStocks;
+            totalStocksElement.className = getColorClass(totalStocks);
+
+            const now = new Date();
+            lastUpdatedElement.textContent = `Last Updated: ${now.toLocaleString()}`;
         });
     </script>
 </body>
