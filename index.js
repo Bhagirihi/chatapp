@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const http = require("http");
+
 const path = require("path");
 const axios = require("axios");
 const puppeteer = require("puppeteer");
@@ -9,6 +10,7 @@ const { Server } = require("socket.io");
 const io = new Server(server);
 require("dotenv").config();
 const PORT = process.env.PORTING || 4000;
+
 let headers = {
   "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -19,6 +21,7 @@ let headers = {
 const getCookiesWithPuppeteer = async () => {
   try {
     const response = await axios.get("https://www.nseindia.com", {
+      timeout: 10000,
       withCredentials: true,
       headers: {
         "User-Agent": "Mozilla/5.0", // Helps avoid bot detection
