@@ -6,21 +6,32 @@ const server = http.createServer(app);
 const PORT = process.env.PORTING || 4000;
 const { Server } = require("socket.io");
 const io = new Server(server);
-const axios = require("axios");
+const puppeteer = require("puppeteer");
 
 async function fetchCookies(url) {
   try {
-    const response = await axios.get(url, {
-      withCredentials: true,
-      headers: {
-        "User-Agent": "Mozilla/5.0", // Helps avoid bot detection
-      },
-      timeout: 10000, // 10 seconds timeout
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+    const page = await browser.newPage();
+
+    await page.setExtraHTTPHeaders({
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
     });
 
-    const cookies = response.headers["set-cookie"];
-    console.log("Cookies:", cookies); // Array of cookies
-    io.emit("message", cookies);
+    await page.goto("https://www.nseindia.com", { waitUntil: "networkidle2" });
+
+    const cookies = await page.cookies();
+    const cookieHeader = cookies
+      .map((cookie) => `${cookie.name}=${cookie.value}`)
+      .join("; ");
+    console.log("Cookies:", cookieHeader);
+
+    await browser.close();
+    console.log("Cookies:", cookieHeader); // Array of cookies
+    io.emit("message", cookieHeader);
   } catch (error) {
     console.error("Error fetching cookies:", error);
     io.emit("message", JSON.stringify(error));
