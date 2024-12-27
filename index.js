@@ -15,6 +15,7 @@ async function fetchCookies(url) {
       headers: {
         "User-Agent": "Mozilla/5.0", // Helps avoid bot detection
       },
+      timeout: 10000, // 10 seconds timeout
     });
 
     const cookies = response.headers["set-cookie"];
@@ -22,7 +23,7 @@ async function fetchCookies(url) {
     io.emit("message", cookies);
   } catch (error) {
     console.error("Error fetching cookies:", error);
-    io.emit("message", error);
+    io.emit("message", JSON.stringify(error));
   }
 }
 
