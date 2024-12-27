@@ -5,6 +5,7 @@ const path = require("path");
 const server = http.createServer(app);
 const PORT = process.env.PORTING || 4000;
 const { Server } = require("socket.io");
+const axios = require("axios");
 const io = new Server(server);
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
@@ -56,6 +57,7 @@ async function fetchCookies() {
     const cookieHeader = cookies
       .map((cookie) => `${cookie.name}=${cookie.value}`)
       .join("; ");
+    console.log("COOKIES", cookieHeader);
     headers = {
       ...headers,
       Cookie: cookieHeader,
@@ -63,7 +65,7 @@ async function fetchCookies() {
       Connection: "keep-alive",
     };
     await browser.close();
-    return cookies;
+    return cookieHeader;
   } catch (error) {
     console.error("Error fetching NSE cookies:", error);
     throw error;
@@ -116,7 +118,7 @@ async function mergeDataBySymbol(nifty50, niftyBank, oiData) {
   return mergedData;
 }
 
-async function fetchDataAll() {
+async function fetchDataAll(socket) {
   try {
     const nifty50 = await fetchData(
       "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050"
@@ -145,6 +147,7 @@ async function fetchDataAll() {
           oiData?.data
         );
       }
+      console.log("mergedData", mergedData);
       io.emit("updateData", mergedData);
     } else {
       throw new Error("Data fetch incomplete");
@@ -160,8 +163,8 @@ io.on("connection", (socket) => {
   console.log("a SOCKET connected ==>", socket.id);
   fetchCookies()
     .then(async (cookies) => {
-      const data = await fetchDataAll();
-      io.emit("message", data);
+      await fetchDataAll(socket);
+      io.emit("message", cookies);
     })
     .catch((error) => {
       console.error("Error:", error);
