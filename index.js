@@ -58,12 +58,7 @@ async function fetchCookies() {
       .map((cookie) => `${cookie.name}=${cookie.value}`)
       .join("; ");
     console.log("COOKIES", cookieHeader);
-    headers = {
-      ...headers,
-      Cookie: cookieHeader,
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    };
+
     await browser.close();
     return cookieHeader;
   } catch (error) {
@@ -72,7 +67,13 @@ async function fetchCookies() {
   }
 }
 
-async function fetchData(url) {
+async function fetchData(url, cookieHeader) {
+  headers = {
+    ...headers,
+    Cookie: cookieHeader,
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  };
   try {
     const response = await axios.get(url, { headers });
     return response.data;
@@ -114,20 +115,24 @@ async function mergeDataBySymbol(nifty50, niftyBank, oiData) {
     }
   });
 
-  Object.values(symbolMap).forEach((data) => mergedData.push(data));
+  Object.values(symbolMap).forEach(async (data) => mergedData.push(data));
   return mergedData;
 }
 
-async function fetchDataAll(socket) {
+async function fetchDataAll(socket, cookieHeader) {
+  console.log("HEADER ---", headers);
   try {
     const nifty50 = await fetchData(
-      "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050"
+      "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050",
+      cookieHeader
     );
     const niftyBank = await fetchData(
-      "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%20BANK"
+      "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%20BANK",
+      cookieHeader
     );
     const oiData = await fetchData(
-      "https://www.nseindia.com/api/live-analysis-oi-spurts-underlyings"
+      "https://www.nseindia.com/api/live-analysis-oi-spurts-underlyings",
+      cookieHeader
     );
 
     if (nifty50?.data && niftyBank?.data && oiData?.data) {
@@ -141,14 +146,16 @@ async function fetchDataAll(socket) {
 
       let mergedData = mergeDataBySymbol(NIFTY, BANKNIFTY, OIDATA);
       if (mergedData.length == 0) {
-        mergedData = mergeDataBySymbol(
+        mergedData = await mergeDataBySymbol(
           nifty50?.data,
           niftyBank?.data,
           oiData?.data
         );
       }
-      console.log("mergedData", mergedData);
-      io.emit("updateData", mergedData);
+      Promise.all([mergedData]).then(([data]) => {
+        console.log("mergedData", data);
+        io.emit("updateData", data);
+      });
     } else {
       throw new Error("Data fetch incomplete");
     }
@@ -163,7 +170,7 @@ io.on("connection", (socket) => {
   console.log("a SOCKET connected ==>", socket.id);
   fetchCookies()
     .then(async (cookies) => {
-      await fetchDataAll(socket);
+      await fetchDataAll(socket, cookies);
       io.emit("message", cookies);
     })
     .catch((error) => {
@@ -171,6 +178,18 @@ io.on("connection", (socket) => {
       io.emit("message", error);
     });
   //
+
+  socket.on("fetchData", async () => {
+    fetchCookies()
+      .then(async (cookies) => {
+        await fetchDataAll(socket, cookies);
+        io.emit("message", cookies);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        io.emit("message", error);
+      });
+  });
   socket.on("chat message", (msg) => {
     console.log("message: " + msg);
     io.emit("message", msg);
