@@ -160,7 +160,7 @@ io.on("connection", (socket) => {
   console.log("a SOCKET connected ==>", socket.id);
   fetchCookies()
     .then(async (cookies) => {
-      const data = await fetchDataAll(cookieHeader);
+      const data = await fetchDataAll();
       io.emit("message", data);
     })
     .catch((error) => {
