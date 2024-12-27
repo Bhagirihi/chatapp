@@ -234,9 +234,10 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         var socket = io();
-
+        let myInterval;
         document.getElementById("fetchData").addEventListener("click", () => {
             socket.emit("fetchData");
+
         });
 
         socket.on("connect", () => {
@@ -246,7 +247,9 @@
             setTimeout(() => {
                 loader.style.display = "none"; // Hide loader
             }, 500);
+
         });
+
         socket.on("loader", (value) => {
             console.log("Socket connected");
             const loader = document.getElementById("loader");
@@ -309,9 +312,9 @@
                 </div>
             </div>
             <div class="price-container">
-                <div class="price ${getColorClass(item.change)}">
+                <div class="price ${getColorClass(item.pChange)}">
                     Volume of Change
-                    <div class="price-value">${item.change.toFixed(2) || "N/A"}%</div>
+                    <div class="price-value">${item.pChange.toFixed(2) || "N/A"}%</div>
                 </div>
                 <div class="price">
                     Average of OI

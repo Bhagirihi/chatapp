@@ -1,15 +1,18 @@
 const express = require("express");
-const app = express();
+
 const http = require("http");
 
 const path = require("path");
 const axios = require("axios");
-const puppeteer = require("puppeteer");
-const server = http.createServer(app);
 const { Server } = require("socket.io");
+
+const app = express();
+const server = http.createServer(app);
 const io = new Server(server);
 require("dotenv").config();
+
 const PORT = process.env.PORTING || 4000;
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let headers = {
   "User-Agent":
@@ -18,43 +21,20 @@ let headers = {
   Referer: "https://www.nseindia.com/",
 };
 
-const getCookiesWithPuppeteer = async () => {
-  try {
-    const response = await axios.get("https://www.nseindia.com", {
-      timeout: 10000,
-      withCredentials: true,
-      headers: {
-        "User-Agent": "Mozilla/5.0", // Helps avoid bot detection
-      },
-    });
-
-    const cookies = response.headers["set-cookie"];
-    console.log("Cookies: ==>", cookies); // Array of cookies
-    return cookies;
-  } catch (error) {
-    console.error("Error fetching cookies:", error);
+async function fetchWithRetry(url, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await axios.get(url, { headers });
+      const cookies = await response.headers["set-cookie"];
+      console.log("Cookies: ==>", cookies); // Array of cookies
+      return cookies;
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      console.log(`Retrying... (${i + 1})`);
+      await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** i));
+    }
   }
-  // try {
-  //   const browser = await puppeteer.launch({
-  //     headless: "new",
-  //   });
-  //   const page = await browser.newPage();
-  //   await page.setUserAgent(
-  //     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0 Safari/537.36"
-  //   );
-  //   await page.goto("https://www.nseindia.com", {
-  //     waitUntil: "domcontentloaded",
-  //   });
-
-  //   const cookies = await page.cookies();
-  //   await browser.close();
-
-  //   return cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
-  // } catch (error) {
-  //   console.error("Error fetching cookies:", error.message);
-  //   throw new Error("Failed to retrieve cookies");
-  // }
-};
+}
 
 const fetchData = async (url) => {
   try {
@@ -105,18 +85,19 @@ const mergeDataBySymbol = (nifty50, niftyBank, oiData) => {
 //Handle SOCKET.IO
 io.on("connection", async (socket) => {
   console.log("a SOCKET connected ==>", socket.id);
-  const cookieHeader = await getCookiesWithPuppeteer();
-  console.log("Getting cookies with Puppeteer...", cookieHeader);
-  headers = {
-    ...headers,
-    Cookie: cookieHeader,
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
-  };
-
-  socket.emit("loader", false);
 
   socket.on("fetchData", async () => {
+    const cookieHeader = await fetchWithRetry("https://www.nseindia.com");
+    console.log("Getting cookies with Puppeteer...", cookieHeader);
+    headers = {
+      ...headers,
+      Cookie: cookieHeader,
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    };
+    console.log("Wait starts...");
+    await wait(5000); // Waits for 5 seconds
+    console.log("5 seconds have passed.");
     try {
       const nifty50 = await fetchData(
         "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050"
@@ -129,11 +110,22 @@ io.on("connection", async (socket) => {
       );
 
       if (nifty50?.data && niftyBank?.data && oiData?.data) {
-        const mergedData = mergeDataBySymbol(
-          nifty50.data,
-          niftyBank.data,
-          oiData.data
+        const NIFTY = nifty50?.data.filter(
+          (item) => item.pChange >= 2 || item.pChange <= -2
         );
+        const BANKNIFTY = niftyBank?.data.filter(
+          (item) => item.pChange >= 2 || item.pChange <= -2
+        );
+        const OIDATA = oiData?.data.filter((item) => item.avgInOI >= 3);
+
+        let mergedData = mergeDataBySymbol(NIFTY, BANKNIFTY, OIDATA);
+        if (mergedData.length == 0) {
+          mergedData = mergeDataBySymbol(
+            nifty50?.data,
+            niftyBank?.data,
+            oiData?.data
+          );
+        }
         socket.emit("updateData", mergedData);
       } else {
         throw new Error("Data fetch incomplete");
