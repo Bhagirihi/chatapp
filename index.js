@@ -52,8 +52,8 @@ async function fetchCookies() {
     await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
 
     // Fetch cookies
-    const cookies = await page
-      .cookies()
+    const cookies = await page.cookies();
+    const cookieHeader = cookies
       .map((cookie) => `${cookie.name}=${cookie.value}`)
       .join("; ");
     headers = {
