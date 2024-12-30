@@ -3,199 +3,164 @@ const app = express();
 const http = require("http");
 const path = require("path");
 const server = http.createServer(app);
-const PORT = process.env.PORTING || 4000;
+const PORT = process.env.PORT || 4000;
 const { Server } = require("socket.io");
-const axios = require("axios");
+const admin = require("firebase-admin");
+const moment = require("moment");
+const data = require("./nse-scraper");
+
 const io = new Server(server);
-const puppeteer = require("puppeteer-extra");
-const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-puppeteer.use(StealthPlugin());
-let headers = {
-  "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-  "Accept-Language": "en-US,en;q=0.9",
-  Referer: "https://www.nseindia.com/",
-};
+const serviceAccount = require("./rocketstocks-8901b-firebase-adminsdk-nil37-f6ea47acd5.json");
+// Keep track of connected sockets
+const connectedSockets = new Set();
 
-async function fetchCookies() {
-  const userAgent =
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
-  const url = "https://www.nseindia.com";
+if (!admin.apps.length) {
+  // Initialize Firebase Admin SDK
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+}
+const db = admin.firestore();
 
+// Wait utility function
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Fetch the latest stock data by `lastUpdateTime` from a specific date and time
+async function fetchLatestData(socket, date) {
   try {
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+    // Reference the specific date document
+    const dateRef = db.collection("Stocks").doc(date);
 
-    const page = await browser.newPage();
+    // Get sub-collections (times) under the date
+    const collections = await dateRef.listCollections();
 
-    // Set headers to mimic a real browser
-    await page.setUserAgent(userAgent);
-    await page.setViewport({ width: 1280, height: 800 });
-    await page.setExtraHTTPHeaders({
-      "Accept-Language": "en-US,en;q=0.9",
-      Referer: url,
-    });
+    // Fetch the latest stock data from the latest time sub-collection
+    collections.forEach(async (timeCollection) => {
+      // Query the collection and order by `lastUpdateTime` (descending)
+      const snapshot = await timeCollection
+        .orderBy("lastUpdateTime", "desc")
+        .limit(1) // Limit to the most recent stock for that time
+        .get();
 
-    // Handle resource interception to speed up navigation
-    await page.setRequestInterception(true);
-    page.on("request", (req) => {
-      const resourceType = req.resourceType();
-      if (["image", "stylesheet", "font"].includes(resourceType)) {
-        req.abort();
-      } else {
-        req.continue();
+      if (!snapshot.empty) {
+        const finalData = [];
+        snapshot.forEach((doc) => {
+          console.log("Latest stock data:", doc);
+          finalData.push(doc.data());
+        });
+        //  console.log("finalData", finalData);
+        socket.emit("latestStockData", finalData); // Send the data to the client
       }
     });
-
-    // Navigate to the NSE website
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
-
-    // Fetch cookies
-    const cookies = await page.cookies();
-    const cookieHeader = cookies
-      .map((cookie) => `${cookie.name}=${cookie.value}`)
-      .join("; ");
-    console.log("COOKIES", cookieHeader);
-
-    await browser.close();
-    return cookieHeader;
   } catch (error) {
-    console.error("Error fetching NSE cookies:", error);
-    throw error;
+    console.error("Error fetching latest stock data:", error);
   }
 }
 
-async function fetchData(url, cookieHeader) {
-  headers = {
-    ...headers,
-    Cookie: cookieHeader,
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
-  };
+async function fetchLatestTimeRecord(date) {
+  const dateDocRef = db.collection("Stocks").doc(date);
+  const subcollections = await dateDocRef.listCollections();
+  if (subcollections.length === 0) {
+    console.log(`No time-based subcollections found for ${date}.`);
+    return null;
+  }
+
+  // Extract subcollection names and sort them to find the latest time
+  const timeCollections = subcollections.map((col) => col.id);
+  timeCollections.sort((a, b) => b.localeCompare(a)); // Sort in descending order (latest time first)
+
+  const latestTime = timeCollections[0]; // Get the latest time
+  console.log(`Latest time subcollection for ${latestTime}`);
+  return latestTime;
+}
+
+async function fetchLatestDateRecord() {
   try {
-    const response = await axios.get(url, { headers });
-    return response.data;
+    // Reference the "Stocks" collection
+    const stocksCollectionRef = db.collection("Stocks");
+
+    // Fetch all documents (dates) within the "Stocks" collection
+    const snapshot = await stocksCollectionRef.listDocuments();
+    if (snapshot.length === 0) {
+      console.log("No date documents found in the 'Stocks' collection.");
+      return null;
+    }
+
+    // Extract document IDs (dates)
+    const dateDocuments = snapshot.map((doc) => doc.id);
+
+    // Sort document IDs (dates) in descending order
+    dateDocuments.sort((a, b) => {
+      const dateA = moment(a, "DD-MMM-YYYY");
+      const dateB = moment(b, "DD-MMM-YYYY");
+      return dateB - dateA; // Descending order
+    });
+
+    // Get the latest date
+    const latestDate = dateDocuments[0];
+    console.log(`Latest Date document: ${latestDate}`);
+    return latestDate;
   } catch (error) {
-    console.error(`Error fetching ${url}:`, error.message);
+    console.error("Error fetching the latest date record:", error.message);
     return null;
   }
 }
 
-async function mergeDataBySymbol(nifty50, niftyBank, oiData) {
-  const mergedData = [];
-  const symbolMap = {};
+async function listenToSubCollection(socket, latestDate, latestTime) {
+  const subCollectionRef = db
+    .collection("Stocks")
+    .doc(latestDate)
+    .collection(latestTime);
 
-  nifty50.forEach((item) => {
-    symbolMap[item.symbol] = { ...item, type: "Nifty 50" };
+  // Set up a real-time listener
+  subCollectionRef.onSnapshot((snapshot) => {
+    snapshot.docChanges().forEach((change) => {
+      const type = change.type; // 'added', 'modified', 'removed'
+      const data = change.doc.data();
+      const docId = change.doc.id;
+      // Emit the update via Socket.IO
+      socket.emit("latestUpdateStockData", { type, docId, data });
+    });
   });
 
-  niftyBank.forEach((item) => {
-    if (symbolMap[item.symbol]) {
-      symbolMap[item.symbol] = {
-        ...symbolMap[item.symbol],
-        ...item,
-        type: "Nifty 50 & Nifty Bank",
-      };
-    } else {
-      symbolMap[item.symbol] = { ...item, type: "Nifty Bank" };
-    }
-  });
-
-  oiData.forEach((item) => {
-    if (symbolMap[item.symbol]) {
-      symbolMap[item.symbol] = {
-        ...symbolMap[item.symbol],
-        latestOI: item.latestOI,
-        prevOI: item.prevOI,
-        changeInOI: item.changeInOI,
-        avgInOI: item.avgInOI,
-      };
-    }
-  });
-
-  Object.values(symbolMap).forEach(async (data) => mergedData.push(data));
-  return mergedData;
+  console.log(
+    `Listening to changes in sub-collection: Stocks/${latestDate}/${latestTime}`
+  );
 }
 
-async function fetchDataAll(socket, cookieHeader) {
-  console.log("HEADER ---", headers);
-  try {
-    const nifty50 = await fetchData(
-      "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050",
-      cookieHeader
-    );
-    const niftyBank = await fetchData(
-      "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%20BANK",
-      cookieHeader
-    );
-    const oiData = await fetchData(
-      "https://www.nseindia.com/api/live-analysis-oi-spurts-underlyings",
-      cookieHeader
-    );
-
-    if (nifty50?.data && niftyBank?.data && oiData?.data) {
-      const NIFTY = nifty50?.data.filter(
-        (item) => item.pChange >= 2 || item.pChange <= -2
-      );
-      const BANKNIFTY = niftyBank?.data.filter(
-        (item) => item.pChange >= 2 || item.pChange <= -2
-      );
-      const OIDATA = oiData?.data.filter((item) => item.avgInOI >= 3);
-
-      let mergedData = mergeDataBySymbol(NIFTY, BANKNIFTY, OIDATA);
-      if (mergedData.length == 0) {
-        mergedData = await mergeDataBySymbol(
-          nifty50?.data,
-          niftyBank?.data,
-          oiData?.data
-        );
-      }
-      Promise.all([mergedData]).then(([data]) => {
-        console.log("mergedData", data);
-        io.emit("updateData", data);
-      });
-    } else {
-      throw new Error("Data fetch incomplete");
-    }
-  } catch (error) {
-    console.error("Data fetch error:", error.message);
-    socket.emit("error", "Failed to fetch stock data");
-  }
-}
-
-//Handle SOCKET.IO
+// Handle Socket.IO events
 io.on("connection", (socket) => {
   console.log("a SOCKET connected ==>", socket.id);
-  fetchCookies()
-    .then(async (cookies) => {
-      await fetchDataAll(socket, cookies);
-      io.emit("message", cookies);
+  connectedSockets.add(socket);
+
+  // Start Firestore listener for real-time updates
+
+  // Usage Example
+  fetchLatestDateRecord()
+    .then((latestDate) => {
+      if (latestDate) {
+        fetchLatestTimeRecord(latestDate)
+          .then((latestTime) => {
+            console.log(
+              `Found the latest Data on: ${latestDate} ${latestTime}`
+            );
+            // fetchLatestData(socket, latestDate)
+            listenToSubCollection(socket, latestDate, latestTime); // Replace with your Firestore collection path
+          })
+          .catch((error) => {
+            console.error("Error:", error.message);
+          });
+      } else {
+        console.log("No latest date found.");
+      }
     })
     .catch((error) => {
-      console.error("Error:", error);
-      io.emit("message", error);
+      console.error("Error:", error.message);
     });
-  //
 
-  socket.on("fetchData", async () => {
-    fetchCookies()
-      .then(async (cookies) => {
-        await fetchDataAll(socket, cookies);
-        io.emit("message", cookies);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        io.emit("message", error);
-      });
-  });
-  socket.on("chat message", (msg) => {
-    console.log("message: " + msg);
-    io.emit("message", msg);
-  });
-
+  // Handle socket disconnection
   socket.on("disconnect", () => {
+    connectedSockets.delete(socket);
     console.log("user disconnected");
   });
 });
@@ -206,6 +171,11 @@ app.get("/", (req, res) => {
   res.sendFile(__dirname + "/public" + "/index.html");
 });
 
+app.get("/fetch", (req, res) => {
+  res.json(data);
+});
+
+// Start the server
 server.listen(PORT, () => {
   console.log(`listening on *:${PORT}`);
 });

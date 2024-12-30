@@ -224,8 +224,6 @@
             <button id="fetchData">Fetch Data</button>
         </div>
 
-
-
         <div class="card-grid" id="stockData"></div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
@@ -246,95 +244,112 @@
             if (value < 0) return "negative";
             return "neutral";
         }
-
-        socket.on("updateData", (data) => {
-            console.log("data ---->", data)
+        // Listen for real-time updates
+        socket.on("latestUpdateStockData", (update) => {
+            const { type, docId, data } = update; // Extract update info
+            console.log("Received real-time update:", type, docId, data);
             const cardGrid = document.getElementById("stockData");
+            let totalPrice = 0;
+            let totalStocks = 0;
             const totalPriceElement = document.getElementById("totalPrice");
             const totalStocksElement = document.getElementById("totalStocks");
             const lastUpdatedElement = document.getElementById("lastUpdated");
 
-            cardGrid.innerHTML = "";
 
-            let totalPrice = 0;
-            let totalStocks = 0;
-
-            data.forEach((item) => {
-
-                if (item.symbol !== "NIFTY BANK" && item.symbol !== "NIFTY 50") {
-                    totalPrice += item.lastPrice || 0;
-                    totalStocks++;
-
-
+            if (type === "added") {
+                // Add a new stock card
+                if (data.symbol !== "NIFTY BANK" && data.symbol !== "NIFTY 50") {
                     const card = document.createElement("div");
                     card.className = "card";
-
-                    card.innerHTML = `
-            <div class="card-header">
-                <div class="card-title">${item.symbol}</div>
-                <div class="price-header ${getColorClass(item.lastPrice - item.previousClose)}">
-                    ₹${item.lastPrice ? item.lastPrice.toFixed(2) : "N/A"}
-                </div>
-            </div>
-            <div class="price-container">
-                <div class="price">
-                    Open
-                    <div class="price-value ${getColorClass(item.open - item.previousClose)}">${item.open || "N/A"}</div>
-                </div>
-                <div class="price">
-                    High
-                    <div class="price-value ${getColorClass(item.dayHigh - item.previousClose)}">${item.dayHigh || "N/A"}</div>
-                </div>
-                <div class="price">
-                    Low
-                    <div class="price-value ${getColorClass(item.dayLow - item.previousClose)}">${item.dayLow || "N/A"}</div>
-                </div>
-                <div class="price">
-                    Prev
-                    <div class="price-value">${item.previousClose || "N/A"}</div>
-                </div>
-            </div>
-            <div class="price-container">
-                <div class="price ${getColorClass(item.pChange)}">
-                    Volume of Change
-                    <div class="price-value">${item.pChange.toFixed(2) || "N/A"}%</div>
-                </div>
-                <div class="price">
-                    Average of OI
-                    <div class="price-value">${item.avgInOI || "N/A"}%</div>
-                </div>
-            </div>
-            <div class="price-container">
-                <div class="price">
-                    52High
-                    <div class="price-value ${getColorClass(item.yearHigh - item.previousClose)}">${item.yearHigh || "N/A"}</div>
-                </div>
-                <div class="price">
-                    52Low
-                    <div class="price-value ${getColorClass(item.yearLow - item.previousClose)}">${item.yearLow || "N/A"}</div>
-                </div>
-                <div class="price">
-                    VC(30D)
-                    <div class="price-value ${getColorClass(item.perChange30d)}">${item.perChange30d || "N/A"}%</div>
-                </div>
-                <div class="price">
-                    VC(365D)
-                    <div class="price-value ${getColorClass(item.perChange365d)}">${item.perChange365d || "N/A"}%</div>
-                </div>
-            </div>
-        `;
-                    cardGrid.appendChild(card);
+                    card.id = `stock-${docId}`; // Set a unique ID for the stock
+                    totalPrice += item.lastPrice || 0;
+                    totalStocks++;
+                    card.innerHTML = generateStockCard(data); // Generate card HTML
+                    cardGrid.appendChild(card); // Add to the card grid
                 }
-            });
-
-            totalPriceElement.textContent = totalPrice.toFixed(2);
-            totalPriceElement.className = getColorClass(totalPrice);
-            totalStocksElement.textContent = totalStocks;
-            totalStocksElement.className = getColorClass(totalStocks);
-
-            const now = new Date();
-            lastUpdatedElement.textContent = `Last Updated: ${now.toLocaleString()}`;
+            } else if (type === "modified") {
+                // Update an existing stock card
+                const card = document.getElementById(`stock-${docId}`);
+                if (card) {
+                    totalPrice += item.lastPrice || 0;
+                    totalStocks++;
+                    card.innerHTML = generateStockCard(data); // Update card content
+                }
+            } else if (type === "removed") {
+                // Remove the stock card
+                const card = document.getElementById(`stock-${docId}`);
+                if (card) {
+                    totalPrice -= item.lastPrice || 0;
+                    totalStocks--;
+                    card.remove();
+                }
+            }
+            // Update the UI based on the real-time update
         });
+
+
+
+        function generateStockCard(item) {
+
+
+
+
+            return `
+    <div class="card-header">
+      <div class="card-title">${item.symbol}</div>
+      <div class="price-header ${getColorClass(item.lastPrice - item.previousClose)}">
+          ₹${item.lastPrice ? item.lastPrice.toFixed(2) : "N/A"}
+      </div>
+    </div>
+    <div class="price-container">
+      <div class="price">
+          Open
+          <div class="price-value ${getColorClass(item.open - item.previousClose)}">${item.open || "N/A"}</div>
+      </div>
+      <div class="price">
+          High
+          <div class="price-value ${getColorClass(item.dayHigh - item.previousClose)}">${item.dayHigh || "N/A"}</div>
+      </div>
+      <div class="price">
+          Low
+          <div class="price-value ${getColorClass(item.dayLow - item.previousClose)}">${item.dayLow || "N/A"}</div>
+      </div>
+      <div class="price">
+          Prev
+          <div class="price-value">${item.previousClose || "N/A"}</div>
+      </div>
+    </div>
+    <div class="price-container">
+      <div class="price ${getColorClass(item.pChange)}">
+          Volume of Change
+          <div class="price-value">${item.pChange.toFixed(2) || "N/A"}%</div>
+      </div>
+      <div class="price">
+          Average of OI
+          <div class="price-value">${item.avgInOI || "N/A"}%</div>
+      </div>
+    </div>
+    <div class="price-container">
+      <div class="price">
+          52High
+          <div class="price-value ${getColorClass(item.yearHigh - item.previousClose)}">${item.yearHigh || "N/A"}</div>
+      </div>
+      <div class="price">
+          52Low
+          <div class="price-value ${getColorClass(item.yearLow - item.previousClose)}">${item.yearLow || "N/A"}</div>
+      </div>
+      <div class="price">
+          VC(30D)
+          <div class="price-value ${getColorClass(item.perChange30d)}">${item.perChange30d || "N/A"}%</div>
+      </div>
+      <div class="price">
+          VC(365D)
+          <div class="price-value ${getColorClass(item.perChange365d)}">${item.perChange365d || "N/A"}%</div>
+      </div>
+    </div>
+  `;
+        }
+
     </script>
 </body>
 
