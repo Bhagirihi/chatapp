@@ -26,10 +26,10 @@ async function fetchCookies() {
   const url = "https://www.nseindia.com";
   // Detect Termux environment
   const isTermux = !!process.env.TERMUX_VERSION;
-
+  console.log("isTermux ==>", isTermux);
   // Set the executablePath for Termux
   const executablePath = isTermux
-    ? "/data/data/com.termux/files/usr/bin/chromium" // Chromium in Termux
+    ? "/usr/bin/chromium" // Chromium in Termux
     : undefined; // Use default browser for non-Termux environments
 
   try {
