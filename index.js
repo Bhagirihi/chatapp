@@ -9,6 +9,9 @@ const axios = require("axios");
 const io = new Server(server);
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
+const NodeCache = require("node-cache");
+const cache = new NodeCache({ stdTTL: 300 }); // Cache for 15 minutes
+
 puppeteer.use(StealthPlugin());
 let headers = {
   "User-Agent":
@@ -16,7 +19,7 @@ let headers = {
   "Accept-Language": "en-US,en;q=0.9",
   Referer: "https://www.nseindia.com/",
 };
-
+const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 async function fetchCookies() {
   const userAgent =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
@@ -57,7 +60,7 @@ async function fetchCookies() {
     const cookieHeader = cookies
       .map((cookie) => `${cookie.name}=${cookie.value}`)
       .join("; ");
-    console.log("COOKIES", cookieHeader);
+    console.log("COOKIES");
 
     await browser.close();
     return cookieHeader;
@@ -83,8 +86,17 @@ async function fetchData(url, cookieHeader) {
   }
 }
 
-async function mergeDataBySymbol(nifty50, niftyBank, oiData) {
+async function mergeDataBySymbol(
+  nifty50,
+  niftyBank,
+  oiData,
+  mostActive,
+  updateTime,
+  stockCall,
+  stockPut
+) {
   const mergedData = [];
+  const MOSTACTIVE = mostActive.map((item) => item.symbol);
   const symbolMap = {};
 
   nifty50.forEach((item) => {
@@ -103,6 +115,34 @@ async function mergeDataBySymbol(nifty50, niftyBank, oiData) {
     }
   });
 
+  stockCall.forEach((item) => {
+    if (symbolMap[item.underlying]) {
+      symbolMap[item.underlying] = {
+        ...symbolMap[item.underlying],
+        FNO: [
+          ...(symbolMap[item.underlying]?.FNO || []), // Ensure FNO is an array or initialize it as an empty array
+          {
+            ...item,
+          },
+        ],
+      };
+    }
+  });
+
+  stockPut.forEach((item) => {
+    if (symbolMap[item.underlying]) {
+      symbolMap[item.underlying] = {
+        ...symbolMap[item.underlying],
+        FNO: [
+          ...(symbolMap[item.underlying]?.FNO || []), // Ensure FNO is an array or initialize it as an empty array
+          {
+            ...item,
+          },
+        ],
+      };
+    }
+  });
+
   oiData.forEach((item) => {
     if (symbolMap[item.symbol]) {
       symbolMap[item.symbol] = {
@@ -111,16 +151,55 @@ async function mergeDataBySymbol(nifty50, niftyBank, oiData) {
         prevOI: item.prevOI,
         changeInOI: item.changeInOI,
         avgInOI: item.avgInOI,
+        updateTime: updateTime,
+        recommended: MOSTACTIVE.includes(item.symbol) || false,
       };
     }
   });
 
   Object.values(symbolMap).forEach(async (data) => mergedData.push(data));
-  return mergedData;
+  const filteredSortedData = mergedData
+    .filter((item) => item?.FNO?.length > 0) // You can adjust this condition as needed
+    .sort((a, b) => b.FNO.length - a.FNO.length); // Sorting in descending order
+  console.log("filteredSortedData", filteredSortedData);
+  return filteredSortedData.length == 0
+    ? [{ updateTime: updateTime }]
+    : filteredSortedData;
+}
+
+async function fetchExtraDataAll(socket, cookieHeader) {
+  console.log("HEADER ---");
+  try {
+    const indexCall = await fetchData(
+      "https://www.nseindia.com/api/snapshot-derivatives-equity?index=calls-index-vol",
+      cookieHeader
+    );
+    const indexPut = await fetchData(
+      "https://www.nseindia.com/api/snapshot-derivatives-equity?index=puts-index-vol",
+      cookieHeader
+    );
+    const INDEXCALL = indexCall;
+    const INDEXPUT = indexPut;
+
+    // Access the data array
+    const datacall = INDEXCALL.OPTIDX.data;
+
+    const dataput = INDEXPUT.OPTIDX.data;
+
+    // Merge arrays
+    const mergedArray = [...datacall, ...dataput]
+      .filter((item) => item.pChange >= 25)
+      .filter((item) => item.lastPrice < 50)
+      .sort((a, b) => a.lastPrice - b.lastPrice);
+
+    io.emit("updateOptionData", mergedArray, INDEXPUT.OPTIDX.timestamp);
+  } catch (error) {
+    console.error("Data fetch error:", error.message);
+    socket.emit("error", "Failed to fetch stock data");
+  }
 }
 
 async function fetchDataAll(socket, cookieHeader) {
-  console.log("HEADER ---", headers);
   try {
     const nifty50 = await fetchData(
       "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050",
@@ -134,8 +213,29 @@ async function fetchDataAll(socket, cookieHeader) {
       "https://www.nseindia.com/api/live-analysis-oi-spurts-underlyings",
       cookieHeader
     );
+    const stockCall = await fetchData(
+      "https://www.nseindia.com/api/snapshot-derivatives-equity?index=calls-stocks-vol",
+      cookieHeader
+    );
 
-    if (nifty50?.data && niftyBank?.data && oiData?.data) {
+    const stockPut = await fetchData(
+      "https://www.nseindia.com/api/snapshot-derivatives-equity?index=puts-stocks-vol",
+      cookieHeader
+    );
+
+    const mostActive = await fetchData(
+      "https://www.nseindia.com/api/live-analysis-most-active-securities?index=volume",
+      cookieHeader
+    );
+
+    if (
+      nifty50?.data &&
+      niftyBank?.data &&
+      oiData?.data &&
+      mostActive?.data &&
+      stockCall.OPTSTK.data &&
+      stockPut.OPTSTK.data
+    ) {
       const NIFTY = nifty50?.data.filter(
         (item) => item.pChange >= 2 || item.pChange <= -2
       );
@@ -144,16 +244,24 @@ async function fetchDataAll(socket, cookieHeader) {
       );
       const OIDATA = oiData?.data.filter((item) => item.avgInOI >= 3);
 
-      let mergedData = mergeDataBySymbol(NIFTY, BANKNIFTY, OIDATA);
-      if (mergedData.length == 0) {
-        mergedData = await mergeDataBySymbol(
-          nifty50?.data,
-          niftyBank?.data,
-          oiData?.data
-        );
-      }
-      Promise.all([mergedData]).then(([data]) => {
-        console.log("mergedData", data);
+      let STOCKCALL = stockCall.OPTSTK.data.filter(
+        (item) => item.pChange >= 50
+      );
+      let STOCKPUT = stockPut.OPTSTK.data.filter((item) => item.pChange >= 50);
+      let ACTIVE = mostActive?.data;
+
+      const LSTUPDATE = nifty50.timestamp;
+
+      let mergedData = mergeDataBySymbol(
+        NIFTY,
+        BANKNIFTY,
+        OIDATA,
+        ACTIVE,
+        LSTUPDATE,
+        STOCKCALL,
+        STOCKPUT
+      );
+      Promise.all([mergedData]).then(async ([data]) => {
         io.emit("updateData", data);
       });
     } else {
@@ -168,31 +276,36 @@ async function fetchDataAll(socket, cookieHeader) {
 //Handle SOCKET.IO
 io.on("connection", (socket) => {
   console.log("a SOCKET connected ==>", socket.id);
-  fetchCookies()
-    .then(async (cookies) => {
-      await fetchDataAll(socket, cookies);
-      io.emit("message", cookies);
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-      io.emit("message", error);
-    });
-  //
 
   socket.on("fetchData", async () => {
     fetchCookies()
       .then(async (cookies) => {
         await fetchDataAll(socket, cookies);
-        io.emit("message", cookies);
+        await fetchExtraDataAll(socket, cookies);
       })
       .catch((error) => {
         console.error("Error:", error);
-        io.emit("message", error);
       });
   });
-  socket.on("chat message", (msg) => {
-    console.log("message: " + msg);
-    io.emit("message", msg);
+
+  socket.on("Stocks", async () => {
+    fetchCookies()
+      .then(async (cookies) => {
+        await fetchDataAll(socket, cookies);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  });
+
+  socket.on("Options", async () => {
+    fetchCookies()
+      .then(async (cookies) => {
+        await fetchExtraDataAll(socket, cookies);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   });
 
   socket.on("disconnect", () => {

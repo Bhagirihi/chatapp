@@ -5,6 +5,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <!-- Font Awesome Icon Library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <title>Rocket Stock Data</title>
 
     <style>
@@ -13,6 +15,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #121212;
             color: #ffffff;
+
             margin: 0;
             padding: 0;
         }
@@ -31,7 +34,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            /* max-width: 1200px; */
             margin: 40px auto;
             padding: 0 20px;
         }
@@ -40,11 +43,14 @@
         .summary-row {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             background-color: #333333;
             padding: 15px 30px;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
             margin-bottom: 30px;
+            gap: 15px;
+            /* Add spacing between elements */
         }
 
         .summary-row p {
@@ -68,12 +74,72 @@
             background-color: #006f8c;
         }
 
+        .row-group {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            /* Keep Total Price and Total Stocks in a single row */
+            gap: 15px;
+            /* Add spacing between Total Price and Total Stocks */
+        }
+
+        /* Responsive Design for Mobile */
+        @media (max-width: 600px) {
+            .summary-row {
+                flex-direction: column;
+                /* Stack elements vertically */
+                align-items: stretch;
+                /* Make elements take full width */
+                padding: 15px 20px;
+                /* Adjust padding for smaller screens */
+            }
+
+            .row-group {
+                flex-direction: row;
+                /* Total Price and Total Stocks stay in a row */
+                justify-content: center;
+                /* Center align for better appearance */
+                gap: 10px;
+                /* Adjust spacing for mobile */
+            }
+
+            .row-group p {
+                font-size: 16px;
+                /* Adjust font size for mobile */
+            }
+
+            .summary-row p {
+                text-align: center;
+                /* Center align text for better readability */
+                font-size: 16px;
+                /* Slightly smaller font for mobile */
+            }
+
+            .summary-row button {
+                width: 100%;
+                /* Button spans full width */
+                font-size: 16px;
+                /* Slightly smaller font for mobile */
+            }
+        }
+
         /* Card Grid */
         .card-grid {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
             justify-content: center;
+        }
+
+        .cardNoData {
+            width: 300px;
+            padding: 20px;
+            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
         }
 
         .card {
@@ -131,6 +197,7 @@
             text-align: center;
             color: #000;
             font-size: 14px;
+            min-width: max-content;
         }
 
         .price-value {
@@ -176,6 +243,142 @@
             animation: spin 1s linear infinite;
         }
 
+        .card-date {
+            font-size: 14px;
+            color: #868e96;
+            margin-bottom: 15px;
+        }
+
+        .card-message {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .card-icon {
+            font-size: 48px;
+            color: #adb5bd;
+            margin-bottom: 10px;
+        }
+
+        /* Style tab links */
+        .tablink {
+            background-color: #555;
+            color: white;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            font-size: 17px;
+            width: 25%;
+        }
+
+        .tablink:hover {
+            background-color: #777;
+        }
+
+        /* Style the tab content (and add height:100% for full page content) */
+        .tabcontent {
+            color: white;
+            display: none;
+            padding: 100px 20px;
+            height: 100%;
+        }
+
+        .table-container {
+            margin-top: 25px;
+            overflow-x: auto;
+            background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+            border-radius: 10px;
+
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .fno-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .fno-table thead {
+            background-color: #444;
+            color: #f5a623;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .fno-table th,
+        .fno-table td {
+            padding: 12px;
+            border: 1px solid #555;
+            text-align: center;
+        }
+
+        .fno-table tbody tr:nth-child(odd) {
+            background-color: #333333;
+        }
+
+        .fno-table tbody tr:nth-child(even) {
+            background-color: #3a3a3a;
+        }
+
+        .fno-table th {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .fno-table td {
+            color: #dddddd;
+        }
+
+        .fno-table td.positive {
+            color: #4caf50;
+        }
+
+        .fno-table td.negative {
+            color: #e74c3c;
+        }
+
+        .fno-table td.neutral {
+            color: #bbbbbb;
+        }
+
+        .checked {
+            color: orange;
+            padding: 5px;
+
+        }
+
+
+
+        /* Responsive Design for Table */
+        @media (max-width: 768px) {
+
+            .fno-table th,
+            .fno-table td {
+                padding: 10px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .table-container {
+                padding: 10px;
+            }
+
+            .fno-table th,
+            .fno-table td {
+                padding: 8px;
+                font-size: 12px;
+            }
+        }
+
+
+
         @keyframes spin {
             from {
                 transform: rotate(0deg);
@@ -219,27 +422,42 @@
     <div class="container">
         <div class="summary-row">
             <p id="lastUpdated">Last Updated: --</p>
-            <p>Total Price: ₹<span id="totalPrice" class="neutral">0.00</span></p>
-            <p>Total Stocks: <span id="totalStocks" class="neutral">0</span></p>
+            <div class="row-group">
+                <p>Total Price: ₹<span id="totalPrice" class="neutral">0.00</span></p>
+                <p>Total Stocks: <span id="totalStocks" class="neutral">0</span></p>
+            </div>
             <button id="fetchData">Fetch Data</button>
         </div>
+        <div id="tabs">
+            <button data-event="Stocks" class="tablink" onclick="openPage('Home', this, 'red')"
+                id="defaultOpen">Stocks</button>
+            <button data-event="Options" class="tablink" onclick="openPage('News', this, 'green')">Options</button>
+        </div>
+        <div id="Home" class="tabcontent">
+            <div class="card-grid" id="stockData"></div>
+        </div>
 
+        <div id="News" class="tabcontent">
+            <div class="card-grid" id="OptionData"></div>
+        </div>
 
-
-        <div class="card-grid" id="stockData"></div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        var socket = io();
-        let myInterval;
-        document.getElementById("fetchData").addEventListener("click", () => {
-            socket.emit("fetchData");
-
-        });
-
-
-
-
+        function openPage(pageName, elmnt, color) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablink");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].style.backgroundColor = "";
+            }
+            document.getElementById(pageName).style.display = "block";
+            elmnt.style.backgroundColor = color;
+            clearInterval(myInterval);
+        }
 
         function getColorClass(value) {
             if (value > 0) return "positive";
@@ -247,8 +465,83 @@
             return "neutral";
         }
 
+        // Get the element with id="defaultOpen" and click on it
+        document.getElementById("defaultOpen").click();
+    </script>
+
+    <script>
+        var socket = io();
+        let myInterval;
+        // document.getElementById("fetchData").addEventListener("click", () => {
+        //     socket.emit("fetchData");
+        //     myInterval = setInterval(() => {
+        //         socket.emit("fetchData");
+        //     }, 5000);
+
+        // });
+
+
+
+
+        // Select tabs and output container
+        const tabs = document.querySelectorAll('#tabs button');
+        const output = document.getElementById('output');
+
+        // Attach click listeners to each tab
+        tabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const eventToEmit = tab.getAttribute('data-event'); // Get the event name
+
+                console.log("TABBING IS ==>", eventToEmit)
+                myInterval = setInterval(() => {
+                    socket.emit(eventToEmit, { message: `Triggered ${eventToEmit}` });
+                }, 10000);
+            });
+        });
+
+        // Trigger the default tab on page load
+        window.onload = function () {
+            const defaultTab = document.getElementById('defaultOpen');
+            if (defaultTab) {
+                defaultTab.click(); // Simulate a click to activate the default tab
+            }
+        };
+
+        socket.on("updateOptionData", (data, timestamp) => {
+            console.log("updateOptionData ---->", data, timestamp)
+            const cardGrid = document.getElementById("OptionData");
+            const totalPriceElement = document.getElementById("totalPrice");
+            const totalStocksElement = document.getElementById("totalStocks");
+            const lastUpdatedElement = document.getElementById("lastUpdated");
+            lastUpdatedElement.textContent = `Last Updated: ${timestamp}`;
+            cardGrid.innerHTML = "";
+            let totalPrice = 0;
+            let totalStocks = 0;
+            console.log("Object.keys(item).length 0", data.length)
+            if (data.length == 0) {
+                this.noDataFoundCardHTML(cardGrid, timestamp)
+            }
+
+
+
+            data.forEach((item) => {
+
+                totalPrice += item?.lastPrice || 0;
+                totalStocks++;
+                const card = document.createElement("div");
+                card.className = "card";
+                // Use the external function to generate card HTML
+                card.innerHTML = generateOptionCardHTML(item, getColorClass);
+                cardGrid.appendChild(card);
+            });
+            totalPriceElement.textContent = totalPrice.toFixed(2) * 75;
+            totalPriceElement.className = getColorClass(totalPrice);
+            totalStocksElement.textContent = totalStocks;
+            totalStocksElement.className = getColorClass(totalStocks);
+        });
+
         socket.on("updateData", (data) => {
-            console.log("data ---->", data)
+            console.log("updateData ---->", data)
             const cardGrid = document.getElementById("stockData");
             const totalPriceElement = document.getElementById("totalPrice");
             const totalStocksElement = document.getElementById("totalStocks");
@@ -260,81 +553,191 @@
             let totalStocks = 0;
 
             data.forEach((item) => {
+                console.log("Object.keys(item).length", Object.keys(item).length)
+                if (Object.keys(item).length == 1) {
+                    this.noDataFoundCardHTML(cardGrid, item.lastUpdateTime)
+                    lastUpdatedElement.textContent = `Last Updated: ${item.lastUpdateTime}`;
+                }
 
-                if (item.symbol !== "NIFTY BANK" && item.symbol !== "NIFTY 50") {
-                    totalPrice += item.lastPrice || 0;
+                if (item?.symbol !== "NIFTY BANK" && item?.symbol !== "NIFTY 50") {
+                    totalPrice += item?.lastPrice || 0;
                     totalStocks++;
-
 
                     const card = document.createElement("div");
                     card.className = "card";
+                    // Use the external function to generate card HTML
+                    card.innerHTML = generateCardHTML(item, getColorClass);
 
-                    card.innerHTML = `
-            <div class="card-header">
-                <div class="card-title">${item.symbol}</div>
-                <div class="price-header ${getColorClass(item.lastPrice - item.previousClose)}">
-                    ₹${item.lastPrice ? item.lastPrice.toFixed(2) : "N/A"}
-                </div>
-            </div>
-            <div class="price-container">
-                <div class="price">
-                    Open
-                    <div class="price-value ${getColorClass(item.open - item.previousClose)}">${item.open || "N/A"}</div>
-                </div>
-                <div class="price">
-                    High
-                    <div class="price-value ${getColorClass(item.dayHigh - item.previousClose)}">${item.dayHigh || "N/A"}</div>
-                </div>
-                <div class="price">
-                    Low
-                    <div class="price-value ${getColorClass(item.dayLow - item.previousClose)}">${item.dayLow || "N/A"}</div>
-                </div>
-                <div class="price">
-                    Prev
-                    <div class="price-value">${item.previousClose || "N/A"}</div>
-                </div>
-            </div>
-            <div class="price-container">
-                <div class="price ${getColorClass(item.pChange)}">
-                    Volume of Change
-                    <div class="price-value">${item.pChange.toFixed(2) || "N/A"}%</div>
-                </div>
-                <div class="price">
-                    Average of OI
-                    <div class="price-value">${item.avgInOI || "N/A"}%</div>
-                </div>
-            </div>
-            <div class="price-container">
-                <div class="price">
-                    52High
-                    <div class="price-value ${getColorClass(item.yearHigh - item.previousClose)}">${item.yearHigh || "N/A"}</div>
-                </div>
-                <div class="price">
-                    52Low
-                    <div class="price-value ${getColorClass(item.yearLow - item.previousClose)}">${item.yearLow || "N/A"}</div>
-                </div>
-                <div class="price">
-                    VC(30D)
-                    <div class="price-value ${getColorClass(item.perChange30d)}">${item.perChange30d || "N/A"}%</div>
-                </div>
-                <div class="price">
-                    VC(365D)
-                    <div class="price-value ${getColorClass(item.perChange365d)}">${item.perChange365d || "N/A"}%</div>
-                </div>
-            </div>
-        `;
                     cardGrid.appendChild(card);
+                    lastUpdatedElement.textContent = `Last Updated: ${item.lastUpdateTime}`;
                 }
             });
 
-            totalPriceElement.textContent = totalPrice.toFixed(2);
+            totalPriceElement.textContent = totalPrice.toFixed(0);
             totalPriceElement.className = getColorClass(totalPrice);
             totalStocksElement.textContent = totalStocks;
             totalStocksElement.className = getColorClass(totalStocks);
 
-            const now = new Date();
-            lastUpdatedElement.textContent = `Last Updated: ${now.toLocaleString()}`;
+
+
         });
+        socket.on("disconnect", (data) => {
+            clearInterval(myInterval);
+        })
+    </script>
+
+    <script>
+
+        function noDataFoundCardHTML(cardGrid, timestamp) {
+
+            const card = document.createElement("div");
+            card.className = "cardNoData";
+            card.innerHTML = `<div class="card-icon">🗓️</div>
+                    <div class="card-title">No Data Available</div>
+                    <div class="card-date">For: ${timestamp}</div>
+                    <div class="card-message">No records found for the selected filters.</div>`
+            cardGrid.appendChild(card);
+        }
+        // Function to generate the card's inner HTML
+        function generateCardHTML(item, getColorClass) {
+            // Generate the FNO section dynamically
+            let fnoHTML = '';
+            if (item.FNO) {
+                fnoHTML += this.generateTableView(item.FNO)
+            }
+            const GAIN = item.lastPrice.toFixed(2) - item.open.toFixed(2)
+
+            // Main card HTML
+            return `
+        <div class="card-header" id="stock-${item.symbol}">
+            <div class="card-title">${item.symbol}</div>
+
+            <div class="price-header ${getColorClass(item.lastPrice - item.previousClose)}">
+                ₹${item.lastPrice ? item.lastPrice.toFixed(2) : "N/A"}
+                ${item.recommended ? '<span class="fa fa-star checked"></span>' : ''}
+
+
+            </div>
+
+        </div>
+        <div class="price-container">
+            <div class="price">
+                Open
+                <div class="price-value ${getColorClass(item.open - item.previousClose)}">${item.open || "N/A"}</div>
+            </div>
+            <div class="price">
+                High
+                <div class="price-value ${getColorClass(item.dayHigh - item.previousClose)}">${item.dayHigh || "N/A"}</div>
+            </div>
+            <div class="price">
+                Low
+                <div class="price-value ${getColorClass(item.dayLow - item.previousClose)}">${item.dayLow || "N/A"}</div>
+            </div>
+            <div class="price">
+                Prev
+                <div class="price-value">${item.previousClose || "N/A"}</div>
+            </div>
+        </div>
+        <div class="price-container">
+            <div class="price">
+                Vol. Change
+                <div class="price-value ${getColorClass(item.pChange)}">${item.pChange?.toFixed(2) || "N/A"}%</div>
+            </div>
+            <div class="price">
+                Avg. OI
+                <div class="price-value ${getColorClass(item.avgInOI)}">${item.avgInOI || "N/A"}%</div>
+            </div>
+            <div class="price">
+                Gain
+                <div class="price-value  ${getColorClass(GAIN)}">₹${GAIN.toFixed(2) || "N/A"}</div>
+            </div>
+        </div>
+        <div class="price-container">
+            <div class="price">
+                52High
+                <div class="price-value ${getColorClass(item.yearHigh - item.previousClose)}">${item.yearHigh || "N/A"}</div>
+            </div>
+            <div class="price">
+                52Low
+                <div class="price-value ${getColorClass(item.yearLow - item.previousClose)}">${item.yearLow || "N/A"}</div>
+            </div>
+            <div class="price">
+                VC(30D)
+                <div class="price-value ${getColorClass(item.perChange30d)}">${item.perChange30d || "N/A"}%</div>
+            </div>
+            <div class="price">
+                VC(365D)
+                <div class="price-value ${getColorClass(item.perChange365d)}">${item.perChange365d || "N/A"}%</div>
+            </div>
+        </div>
+        <!-- Include dynamically generated FNO section -->
+        ${fnoHTML}
+    `;
+        }
+
+
+        function generateTableView(fnoDataList) {
+            return `
+    <div class="table-container">
+      <table class="fno-table">
+        <thead>
+          <tr>
+            <th>Strike Price</th>
+            <th>Option Type</th>
+            <th>Last Price</th>
+            <th>Vol. Change</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${fnoDataList
+                    .map(
+                        (fnoData) => `
+            <tr >
+              <td class="${fnoData.pChange > 90 ? 'positive' : 'neutral'}">${fnoData.strikePrice || "N/A"}</td>
+              <td class="${fnoData.pChange > 90 ? 'positive' : 'neutral'}">${fnoData.optionType || "N/A"}</td>
+              <td class="${fnoData.pChange > 90 ? 'positive' : 'neutral'}">${fnoData.lastPrice || "N/A"}</td>
+              <td class="${fnoData.pChange > 90 ? 'positive' : 'neutral'}">${fnoData.pChange.toFixed(2) || "N/A"}%</td>
+            </tr>
+          `
+                    )
+                    .join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+        }
+
+        function generateOptionCardHTML(item, getColorClass) {
+            return `
+        <div class="card-header" id="stock-${item.identifier}">
+       <div class="price-header">
+                ${item.underlying || "N/A"}
+            </div>
+            <div class="price-header">
+                ${item.strikePrice || "N/A"}
+            </div>
+<div class="price-header">
+                ${item.optionType || "N/A"}
+            </div>
+        </div>
+  <div class="price-container">
+
+            <div class="price">
+                Last Price
+                <div class="price-value">${item.lastPrice || "N/A"}</div>
+            </div>
+            <div class="price ${getColorClass(item.pChange)}">
+                Volume in
+                <div class="price-value">${item.pChange.toFixed(2) || "N/A"}%</div>
+            </div>
+        </div>
+
+
+
+
+    `;
+        }
+
     </script>
 </body>
 
