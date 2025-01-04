@@ -28,9 +28,7 @@ async function fetchCookies() {
   const isTermux = !!process.env.TERMUX_VERSION;
   console.log("isTermux ==>", isTermux);
   // Set the executablePath for Termux
-  const executablePath = isTermux
-    ? "/usr/bin/chromium" // Chromium in Termux
-    : undefined; // Use default browser for non-Termux environments
+  const executablePath = "/usr/bin/chromium";
 
   try {
     const browser = await puppeteer.launch({
