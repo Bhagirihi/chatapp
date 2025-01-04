@@ -1,0 +1,11 @@
+pkg update && pkg upgrade
+pkg install nodejs
+pkg install proot
+mkdir ~/debian
+proot-distro install debian
+proot-distro login debian
+apt update
+apt install chromium
+which chromium
+pkg install git
+git clone https://github.com/Bhagirihi/chatapp.git
