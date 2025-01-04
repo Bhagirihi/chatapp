@@ -24,9 +24,17 @@ async function fetchCookies() {
   const userAgent =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
   const url = "https://www.nseindia.com";
+  // Detect Termux environment
+  const isTermux = !!process.env.TERMUX_VERSION;
+
+  // Set the executablePath for Termux
+  const executablePath = isTermux
+    ? "/data/data/com.termux/files/usr/bin/chromium" // Chromium in Termux
+    : undefined; // Use default browser for non-Termux environments
 
   try {
     const browser = await puppeteer.launch({
+      executablePath,
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
