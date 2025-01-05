@@ -10,8 +10,7 @@ const io = new Server(server);
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const NodeCache = require("node-cache");
-const findChrome = require("chrome-finder"); // Optional, install via npm
-const cache = new NodeCache({ stdTTL: 300 }); // Cache for 15 minutes
+const { execSync } = require("child_process");
 
 puppeteer.use(StealthPlugin());
 let headers = {
@@ -21,6 +20,15 @@ let headers = {
   Referer: "https://www.nseindia.com/",
 };
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+
+// Find Chromium's executable path dynamically
+let chromiumPath;
+try {
+  chromiumPath = execSync("which chromium-browser").toString().trim();
+} catch (err) {
+  console.error("Chromium not found. Please install it in Termux.");
+  chromiumPath = puppeteer.executablePath();
+}
 async function fetchCookies() {
   const userAgent =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
@@ -29,7 +37,7 @@ async function fetchCookies() {
 
   try {
     const browser = await puppeteer.launch({
-      executablePath: puppeteer.executablePath(), // Dynamically finds Puppeteer's bundled Chromium
+      executablePath: chromiumPath, // Use dynamically found path
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
