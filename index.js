@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const http = require("http");
+const ngrok = require("ngrok");
 const path = require("path");
 const server = http.createServer(app);
 const PORT = process.env.PORTING || 4040;
@@ -25,6 +26,7 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 let chromiumPath;
 try {
   chromiumPath = execSync("which chromium").toString().trim();
+  console.log("chromiumPath --", chromiumPath);
 } catch (err) {
   console.error("Chromium not found. Please install it in Termux.");
   chromiumPath = puppeteer.executablePath();
@@ -330,6 +332,17 @@ app.get("/", (req, res) => {
   res.sendFile(__dirname + "/public" + "/index.html");
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`listening on *:${PORT}`);
+  try {
+    // Start Ngrok tunnel
+    const publicUrl = await ngrok.connect({
+      addr: PORT, // Expose this port
+      authtoken: "2pZZqBlxXZILz4vQZ1dYZ19skm5_7bxVDE9rCSyyzANZ9t4rc", // Replace with your Ngrok auth token
+    });
+
+    console.log(`Public URL: ${publicUrl}`);
+  } catch (err) {
+    console.error("Error starting Ngrok:", err);
+  }
 });
