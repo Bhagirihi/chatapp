@@ -10,6 +10,7 @@ const io = new Server(server);
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const NodeCache = require("node-cache");
+const findChrome = require("chrome-finder"); // Optional, install via npm
 const cache = new NodeCache({ stdTTL: 300 }); // Cache for 15 minutes
 
 puppeteer.use(StealthPlugin());
@@ -24,9 +25,11 @@ async function fetchCookies() {
   const userAgent =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
   const url = "https://www.nseindia.com";
+  const executablePath = findChrome(); // Automatically finds Chrome/Chromium on your system
 
   try {
     const browser = await puppeteer.launch({
+      executablePath: executablePath, // Add the path dynamically
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
