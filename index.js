@@ -25,11 +25,11 @@ async function fetchCookies() {
   const userAgent =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
   const url = "https://www.nseindia.com";
-  const executablePath = findChrome(); // Automatically finds Chrome/Chromium on your system
+  //const executablePath = findChrome(); // Automatically finds Chrome/Chromium on your system
 
   try {
     const browser = await puppeteer.launch({
-      executablePath: executablePath, // Add the path dynamically
+      executablePath: puppeteer.executablePath(), // Dynamically finds Puppeteer's bundled Chromium
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
