@@ -24,7 +24,7 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 // Find Chromium's executable path dynamically
 let chromiumPath;
 try {
-  chromiumPath = execSync("which chromium-browser").toString().trim();
+  chromiumPath = execSync("which chromium").toString().trim();
 } catch (err) {
   console.error("Chromium not found. Please install it in Termux.");
   chromiumPath = puppeteer.executablePath();
