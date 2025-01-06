@@ -23,26 +23,40 @@ let headers = {
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 // Find Chromium's executable path dynamically
-let chromiumPath;
-try {
-  chromiumPath = execSync("which chromium").toString().trim();
-  console.log("chromiumPath --", chromiumPath);
-} catch (err) {
-  console.error("Chromium not found. Please install it in Termux.");
-  chromiumPath = puppeteer.executablePath();
+var opsys = process.platform;
+if (opsys == "linux") {
+  let chromiumPath;
+  try {
+    chromiumPath = execSync("which chromium").toString().trim();
+    console.log("chromiumPath --", chromiumPath);
+  } catch (err) {
+    console.error("Chromium not found. Please install it in Termux.");
+    chromiumPath = puppeteer.executablePath();
+  }
 }
+
 async function fetchCookies() {
   const userAgent =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
   const url = "https://www.nseindia.com";
   //const executablePath = findChrome(); // Automatically finds Chrome/Chromium on your system
-
+  let browser;
   try {
-    const browser = await puppeteer.launch({
-      executablePath: chromiumPath, // Use dynamically found path
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+    if (opsys == "darwin") {
+      browser = await puppeteer.launch({
+        // executablePath: chromiumPath, // Use dynamically found path
+        channel: "chrome", // Use Chrome browser
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      });
+    } else if (opsys == "linux") {
+      browser = await puppeteer.launch({
+        executablePath: chromiumPath, // Use dynamically found path
+
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      });
+    }
 
     const page = await browser.newPage();
 
@@ -293,6 +307,7 @@ io.on("connection", (socket) => {
   socket.on("fetchData", async () => {
     fetchCookies()
       .then(async (cookies) => {
+        delay(2000);
         await fetchDataAll(socket, cookies);
         await fetchExtraDataAll(socket, cookies);
       })
@@ -304,6 +319,7 @@ io.on("connection", (socket) => {
   socket.on("Stocks", async () => {
     await fetchCookies()
       .then(async (cookies) => {
+        delay(2000);
         await fetchDataAll(socket, cookies);
       })
       .catch((error) => {
@@ -314,6 +330,7 @@ io.on("connection", (socket) => {
   socket.on("Options", async () => {
     await fetchCookies()
       .then(async (cookies) => {
+        delay(2000);
         await fetchExtraDataAll(socket, cookies);
       })
       .catch((error) => {
