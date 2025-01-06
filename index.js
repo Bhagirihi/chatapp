@@ -302,7 +302,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("Stocks", async () => {
-    fetchCookies()
+    await fetchCookies()
       .then(async (cookies) => {
         await fetchDataAll(socket, cookies);
       })
@@ -312,7 +312,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("Options", async () => {
-    fetchCookies()
+    await fetchCookies()
       .then(async (cookies) => {
         await fetchExtraDataAll(socket, cookies);
       })
