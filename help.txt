@@ -8,4 +8,8 @@ apt update
 apt install chromium
 which chromium
 pkg install git
+pkg install ngrok
 git clone https://github.com/Bhagirihi/chatapp.git
+cd chatapp
+npm install
+node index.js

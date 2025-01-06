@@ -10,8 +10,8 @@ const axios = require("axios");
 const io = new Server(server);
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-const NodeCache = require("node-cache");
 const { execSync } = require("child_process");
+const qrcode = require("qrcode-terminal");
 
 puppeteer.use(StealthPlugin());
 let headers = {
@@ -24,6 +24,7 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 // Find Chromium's executable path dynamically
 var opsys = process.platform;
+console.log("opsys", opsys);
 if (opsys == "linux") {
   let chromiumPath;
   try {
@@ -358,7 +359,11 @@ server.listen(PORT, async () => {
       authtoken: "2pZZqBlxXZILz4vQZ1dYZ19skm5_7bxVDE9rCSyyzANZ9t4rc", // Replace with your Ngrok auth token
     });
 
-    console.log(`Public URL: ${publicUrl}`);
+    // Generate and display the QR code in the console
+    qrcode.generate(publicUrl, { small: true }, (qrCode) => {
+      console.log("Scan this QR Code:");
+      console.log(qrCode);
+    });
   } catch (err) {
     console.error("Error starting Ngrok:", err);
   }
