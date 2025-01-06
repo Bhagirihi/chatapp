@@ -25,16 +25,6 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 // Find Chromium's executable path dynamically
 var opsys = process.platform;
 console.log("opsys", opsys);
-if (opsys == "linux" || opsys == "android") {
-  let chromiumPath;
-  try {
-    chromiumPath = execSync("which chromium").toString().trim();
-    console.log("chromiumPath --", chromiumPath);
-  } catch (err) {
-    console.error("Chromium not found. Please install it in Termux.");
-    chromiumPath = puppeteer.executablePath();
-  }
-}
 
 async function fetchCookies() {
   const userAgent =
@@ -42,6 +32,16 @@ async function fetchCookies() {
   const url = "https://www.nseindia.com";
   //const executablePath = findChrome(); // Automatically finds Chrome/Chromium on your system
   let browser;
+  let chromiumPath;
+  if (opsys == "linux" || opsys == "android") {
+    try {
+      chromiumPath = execSync("which chromium").toString().trim();
+      console.log("chromiumPath --", chromiumPath);
+    } catch (err) {
+      console.error("Chromium not found. Please install it in Termux.");
+      chromiumPath = puppeteer.executablePath();
+    }
+  }
   try {
     if (opsys == "darwin" || opsys == "win32") {
       browser = await puppeteer.launch({
