@@ -25,7 +25,7 @@ const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 // Find Chromium's executable path dynamically
 var opsys = process.platform;
 console.log("opsys", opsys);
-if (opsys == "linux") {
+if (opsys == "linux" || opsys == "android") {
   let chromiumPath;
   try {
     chromiumPath = execSync("which chromium").toString().trim();
@@ -43,14 +43,14 @@ async function fetchCookies() {
   //const executablePath = findChrome(); // Automatically finds Chrome/Chromium on your system
   let browser;
   try {
-    if (opsys == "darwin") {
+    if (opsys == "darwin" || opsys == "win32") {
       browser = await puppeteer.launch({
         // executablePath: chromiumPath, // Use dynamically found path
         channel: "chrome", // Use Chrome browser
         headless: true,
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
       });
-    } else if (opsys == "linux") {
+    } else if (opsys == "linux" || opsys == "android") {
       browser = await puppeteer.launch({
         executablePath: chromiumPath, // Use dynamically found path
 
