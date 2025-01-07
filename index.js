@@ -21,18 +21,34 @@ let headers = {
   Referer: "https://www.nseindia.com/",
 };
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+let browser = null;
+let chromiumPath = null;
+let cookieHeader = null;
+let cookieExpiry = null;
 
 // Find Chromium's executable path dynamically
 var opsys = process.platform;
 console.log("opsys", opsys);
+
+async function getCookie() {
+  const currentTime = Date.now();
+
+  // Check if a valid cookie exists
+  if (cookieHeader && cookieExpiry && cookieExpiry > currentTime) {
+    console.log("Using cached cookie");
+    return cookieHeader;
+  }
+
+  console.log("Cookie expired or not available, fetching new cookie");
+  cookieHeader = await fetchCookies(); // Fetch new cookie
+  return cookieHeader;
+}
 
 async function fetchCookies() {
   const userAgent =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
   const url = "https://www.nseindia.com";
   //const executablePath = findChrome(); // Automatically finds Chrome/Chromium on your system
-  let browser;
-  let chromiumPath;
   if (opsys == "linux" || opsys == "android") {
     try {
       chromiumPath = execSync("which chromium").toString().trim();
@@ -85,11 +101,22 @@ async function fetchCookies() {
 
     // Fetch cookies
     const cookies = await page.cookies();
-    const cookieHeader = cookies
+    cookieHeader = cookies
       .map((cookie) => `${cookie.name}=${cookie.value}`)
       .join("; ");
-    console.log("COOKIES");
+    // Extract cookie expiration dynamically
+    const minExpiry = cookies
+      .map((cookie) => cookie.expires * 1000) // Convert from seconds to milliseconds
+      .filter((expires) => expires > 0) // Ignore session cookies with no expiration
+      .reduce((min, expires) => Math.min(min, expires), Infinity);
 
+    if (minExpiry !== Infinity) {
+      cookieExpiry = minExpiry; // Use the earliest expiration time
+    } else {
+      // If no expiration is provided, set a default expiry (e.g., 15 minutes)
+      cookieExpiry = Date.now() + 15 * 60 * 1000;
+    }
+    console.log("COOKIES");
     await browser.close();
     return cookieHeader;
   } catch (error) {
@@ -306,7 +333,7 @@ io.on("connection", (socket) => {
   console.log("a SOCKET connected ==>", socket.id);
 
   socket.on("fetchData", async () => {
-    fetchCookies()
+    getCookie()
       .then(async (cookies) => {
         delay(2000);
         await fetchDataAll(socket, cookies);
@@ -318,7 +345,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("Stocks", async () => {
-    await fetchCookies()
+    await getCookie()
       .then(async (cookies) => {
         delay(2000);
         await fetchDataAll(socket, cookies);
@@ -329,7 +356,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("Options", async () => {
-    await fetchCookies()
+    await getCookie()
       .then(async (cookies) => {
         delay(2000);
         await fetchExtraDataAll(socket, cookies);
@@ -347,6 +374,7 @@ io.on("connection", (socket) => {
 // Handle App Request
 app.use(express.static(path.resolve("./public")));
 app.get("/", (req, res) => {
+  getCookie();
   res.sendFile(__dirname + "/public" + "/index.html");
 });
 
