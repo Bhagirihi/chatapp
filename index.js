@@ -216,7 +216,6 @@ async function mergeDataBySymbol(
   const filteredSortedData = mergedData
     .filter((item) => item?.FNO?.length > 0) // You can adjust this condition as needed
     .sort((a, b) => b.FNO.length - a.FNO.length); // Sorting in descending order
-  console.log("filteredSortedData", filteredSortedData);
   return filteredSortedData.length == 0
     ? [{ updateTime: updateTime }]
     : filteredSortedData;
