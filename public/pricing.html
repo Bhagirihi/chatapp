@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Plans</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .pricing-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #444;
+        }
+
+        .plans {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .plan-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 230;
+
+            position: relative;
+            text-align: center;
+        }
+
+        .plan-card.popular {
+            border: 2px solid #ff6f61;
+        }
+
+        .ribbon {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ff6f61;
+            color: #fff;
+            padding: 5px 10px;
+            font-size: 0.8em;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+
+        .plan-title {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .price {
+            font-size: 1.8em;
+            color: #ff6f61;
+            margin: 10px 0;
+        }
+
+        .original-price {
+            font-size: 0.8em;
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .savings {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .cta-button {
+            background: #ff6f61;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+
+        }
+
+        .cta-button:hover {
+            background: #e4554b;
+        }
+
+        .benefits {
+            margin-top: 40px;
+            text-align: left;
+        }
+
+        .benefits h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .benefits ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .benefits li {
+            font-size: 1em;
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .benefits span {
+            margin-right: 10px;
+            color: #4caf50;
+            font-size: 1.2em;
+        }
+
+        .plan-description {
+            font-size: 1em;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="pricing-container">
+        <h1 class="title">Choose Your Plan</h1>
+        <div class="plans">
+            <div class="plan-card">
+                <h2 class="plan-title">Daily Plan</h2>
+                <p class="plan-description">Perfect for short-term access.</p>
+                <p class="price">₹9/day</p>
+                <p class="savings">~0% savings</p>
+                <button class="cta-button">Start Now</button>
+            </div>
+            <div class="plan-card popular">
+                <span class="ribbon">Most Popular</span>
+                <h2 class="plan-title">Weekly Plan</h2>
+                <p class="plan-description">Ideal for tracking weekly trends.</p>
+                <p class="price">₹55/week <span class="original-price">₹63</span></p>
+                <p class="savings">~15% savings</p>
+                <button class="cta-button">Subscribe Today</button>
+            </div>
+            <div class="plan-card">
+                <h2 class="plan-title">Monthly Plan</h2>
+                <p class="plan-description">Best value for regular users.</p>
+                <p class="price">₹199/month <span class="original-price">₹270</span></p>
+                <p class="savings">~25% savings</p>
+                <button class="cta-button">Start Now</button>
+            </div>
+            <div class="plan-card">
+                <h2 class="plan-title">Yearly Plan</h2>
+                <p class="plan-description">Maximum savings for pro.</p>
+                <p class="price">₹1799/year <span class="original-price">₹3285</span></p>
+                <p class="savings">~45% savings (Save ₹486)</p>
+                <button class="cta-button">Subscribe Today</button>
+            </div>
+        </div>
+        <div class="benefits">
+            <h3>All Plans Include:</h3>
+            <ul>
+                <li><span>✅</span> Free access to Nifty 50 Stocks</li>
+                <li><span>✅</span> Nifty 50 Index predictions</li>
+                <li><span>✅</span> BankNifty Index predictions</li>
+                <li><span>✅</span> 100% data-driven predictions for accuracy</li>
+            </ul>
+        </div>
+
+    </div>
+</body>
+
+</html>

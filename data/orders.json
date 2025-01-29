@@ -1,0 +1,72 @@
+[
+  {
+    "order": 1,
+    "stick": "TRENT-6200-Put",
+    "date": "1/16/2025, 4:45:29 PM",
+    "total": 179.95,
+    "gain": "",
+    "status": "Executed",
+    "buyValue": 179.95,
+    "currentValue": ""
+  },
+  {
+    "order": 2,
+    "stick": "TRENT-6000-Put",
+    "date": "1/16/2025, 4:45:35 PM",
+    "total": 107,
+    "gain": "",
+    "status": "Executed",
+    "buyValue": 107,
+    "currentValue": ""
+  },
+  {
+    "order": 3,
+    "stick": "NIFTY-21350-Put",
+    "date": "1/17/2025, 11:28:20 AM",
+    "total": 2.3,
+    "gain": "",
+    "status": "Executed",
+    "buyValue": 2.3,
+    "currentValue": ""
+  },
+  {
+    "order": 4,
+    "stick": "RELIANCE-1290-Call",
+    "date": "1/17/2025, 11:28:55 AM",
+    "total": 22.45,
+    "gain": "",
+    "status": "Executed",
+    "buyValue": 22.45,
+    "currentValue": ""
+  },
+  {
+    "order": 5,
+    "stick": "NIFTY-22850-Put",
+    "date": "1/22/2025, 9:12:55 AM",
+    "total": 46,
+    "gain": "",
+    "status": "Executed",
+    "buyValue": 46,
+    "currentValue": ""
+  },
+  {
+    "order": 6,
+    "stick": "NIFTY-22800-Put",
+    "date": "1/22/2025, 9:12:58 AM",
+    "total": 36.2,
+    "gain": "",
+    "status": "Executed",
+    "buyValue": 36.2,
+    "currentValue": ""
+  },
+  {
+    "order": 7,
+    "stick": "RELIANCE-1280-Put",
+    "date": "1/22/2025, 9:13:28 AM",
+    "total": 16.8,
+    "gain": "",
+    "status": "Executed",
+    "buyValue": 16.8,
+    "currentValue": ""
+  }
+]
