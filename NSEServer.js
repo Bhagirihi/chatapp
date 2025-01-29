@@ -24,12 +24,13 @@ let totalGainValue = 0;
 
 app.use(
   cors({
-    origin: "http://localhost:4040", // Allow your frontend origin
-    methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
-    allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers
+    origin: (origin, callback) => {
+      callback(null, true); // Allows all origins dynamically
+    },
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
 puppeteer.use(StealthPlugin());
 let headers = {
   "User-Agent":
