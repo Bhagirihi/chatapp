@@ -426,9 +426,15 @@ io.on("connection", (socket) => {
     activeClients.delete(socket.id);
   });
 });
+// Reusable function to serve files
+const serveFile = (res, fileName) => {
+  res.sendFile(path.join(__dirname, "public", fileName));
+};
 
 // Middleware to parse JSON request bodies
 app.use(bodyParser.json());
+
+app.get("/", (req, res) => serveFile(res, "nseIndex.html"));
 
 // Reset Password Route
 app.post("/reset-password", authController.resetPassword);
@@ -590,19 +596,19 @@ app.post("/orderValues", function (req, res) {
 
 server.listen(PORT, async () => {
   console.log(`listening on *:${PORT}`);
-  try {
-    // Start Ngrok tunnel
-    const publicUrl = await ngrok.connect({
-      addr: PORT, // Expose this port
-      authtoken: "2pZZqBlxXZILz4vQZ1dYZ19skm5_7bxVDE9rCSyyzANZ9t4rc", // Replace with your Ngrok auth token
-    });
+  // try {
+  //   // Start Ngrok tunnel
+  //   const publicUrl = await ngrok.connect({
+  //     addr: PORT, // Expose this port
+  //     authtoken: "2pZZqBlxXZILz4vQZ1dYZ19skm5_7bxVDE9rCSyyzANZ9t4rc", // Replace with your Ngrok auth token
+  //   });
 
-    // Generate and display the QR code in the console
-    qrcode.generate(publicUrl, { small: true }, (qrCode) => {
-      console.log("Scan this QR Code:");
-      console.log(qrCode);
-    });
-  } catch (err) {
-    console.error("Error starting Ngrok:", err);
-  }
+  //   // Generate and display the QR code in the console
+  //   qrcode.generate(publicUrl, { small: true }, (qrCode) => {
+  //     console.log("Scan this QR Code:");
+  //     console.log(qrCode);
+  //   });
+  // } catch (err) {
+  //   console.error("Error starting Ngrok:", err);
+  // }
 });
