@@ -2,11 +2,12 @@
   "name": "learn",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "NSEServer.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon --env-file=.env index.js",
-    "start_prod": "nodemon  index.js"
+    "start_prod": "node  NSEServer.js",
+    "postinstall": "apt-get update && apt-get install -y chromium"
   },
   "keywords": [],
   "author": "",
