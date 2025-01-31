@@ -34,4 +34,4 @@ COPY . .
 EXPOSE 4000
 
 # Command to run your app
-CMD ["node", "index.js"]
+CMD ["node", "NSEServer.js"]
