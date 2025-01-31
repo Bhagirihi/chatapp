@@ -6,7 +6,7 @@ const path = require("path");
 const cors = require("cors");
 
 const server = http.createServer(app);
-const PORT = process.env.SERVER_PORTING || 4000;
+const PORT = process.env.SERVER_PORTING || 1000;
 const bodyParser = require("body-parser");
 const authController = require("./controllers/authController");
 const orderManger = require("./controllers/orderManager");
