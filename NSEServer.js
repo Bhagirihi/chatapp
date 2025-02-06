@@ -442,6 +442,20 @@ const serveFile = (res, fileName) => {
 // Middleware to parse JSON request bodies
 app.use(bodyParser.json());
 
+// ✅ Add a /ping route (Optional, for manual checks)
+app.get("/ping", (req, res) => {
+  res.status(200).send("🏓 Server is alive!");
+});
+
+// ✅ Self-Ping Every 40 Seconds
+setInterval(() => {
+  console.log("🔄 Keeping server awake...");
+
+  fetch("https://minitrade.onrender.com/")
+    .then(() => console.log("✅ Keep-alive ping sent to server"))
+    .catch((err) => console.error("❌ Keep-alive ping failed:", err));
+}, 40 * 1000); // Every 40 seconds
+
 app.get("/", (req, res) => serveFile(res, "nseIndex.html"));
 
 // Reset Password Route
