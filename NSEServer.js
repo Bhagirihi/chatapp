@@ -13,7 +13,14 @@ const orderManger = require("./controllers/orderManager");
 const fs = require("fs");
 const { Server } = require("socket.io");
 const axios = require("axios");
-const io = new Server(server);
+// ✅ Enable CORS for Socket.io
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:3000", "*"], // Allow frontend
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const { execSync } = require("child_process");
@@ -22,15 +29,15 @@ let activeClients = new Map();
 var orderedStocks = [];
 let totalGainValue = 0;
 
+// ✅ Enable CORS for Express routes
 app.use(
   cors({
-    origin: (origin, callback) => {
-      callback(null, true); // Allows all origins dynamically
-    },
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    origin: ["http://localhost:3000", "*"], // Allow frontend
+    methods: ["GET", "POST"],
+    credentials: true, // Allow credentials (cookies, auth headers)
   })
 );
+
 puppeteer.use(StealthPlugin());
 let headers = {
   "User-Agent":
