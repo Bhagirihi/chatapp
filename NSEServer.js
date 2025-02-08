@@ -433,6 +433,13 @@ io.on("connection", (socket) => {
     console.log(`Client disconnected: ${socket.id}, reason: ${reason}`);
     activeClients.delete(socket.id);
   });
+
+  socket.on("customEvent", (data) => {
+    console.log("📩 Received event from client:", data);
+
+    // Optional: Broadcast to all clients
+    io.emit("serverResponse", { reply: "Server received your message!" });
+  });
 });
 // Reusable function to serve files
 const serveFile = (res, fileName) => {
@@ -455,6 +462,15 @@ setInterval(() => {
     .then(() => console.log("✅ Keep-alive ping sent to server"))
     .catch((err) => console.error("❌ Keep-alive ping failed:", err));
 }, 40 * 1000); // Every 40 seconds
+
+// ✅ Catch unhandled errors
+process.on("uncaughtException", (err) => {
+  console.error("🔥 Uncaught Exception:", err);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("🔥 Unhandled Rejection:", reason);
+});
 
 app.get("/", (req, res) => serveFile(res, "nseIndex.html"));
 
