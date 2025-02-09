@@ -16,7 +16,7 @@ const axios = require("axios");
 // ✅ Enable CORS for Socket.io
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "*"], // Allow frontend
+    origin: ["https://minitrade.vercel.app", "http://localhost:3000", "*"], // Allow frontend
     methods: ["GET", "POST"],
     credentials: true,
   },
