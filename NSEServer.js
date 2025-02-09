@@ -32,7 +32,7 @@ let totalGainValue = 0;
 // ✅ Enable CORS for Express routes
 app.use(
   cors({
-    origin: ["http://localhost:3000", "*"], // Allow frontend
+    origin: ["https://minitrade.vercel.app", "http://localhost:3000", "*"], // Allow frontend
     methods: ["GET", "POST"],
     credentials: true, // Allow credentials (cookies, auth headers)
   })
@@ -294,6 +294,8 @@ async function fetchExtraDataAll(socket, cookieHeader) {
 
     io.emit("updateOptionCalls", indexCalls, INDEXCALL.OPTIDX.timestamp);
     io.emit("updateOptionPuts", indexPuts, INDEXPUT.OPTIDX.timestamp);
+    console.log("updateOptionCalls", indexCalls.length);
+    console.log("updateOptionPuts", indexPuts.length);
   } catch (error) {
     console.error("Data fetch error:", error.message);
     socket.emit("error", "Failed to fetch stock data");
@@ -383,6 +385,7 @@ async function fetchDataAll(socket, cookieHeader) {
       );
       Promise.all([mergedData]).then(async ([data]) => {
         io.emit("updateData", data, LSTUPDATE);
+        console.log("updateData", data.length);
       });
     } else {
       throw new Error("Data fetch incomplete");
